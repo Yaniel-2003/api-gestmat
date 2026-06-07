@@ -24,29 +24,17 @@ from .curso_views import CursoViewSet
 # IMPORTACIÓN DE VISTAS DE USUARIOS
 from .usuario_views import UsuarioViewSet, fotos_usuario, eliminar_foto_usuario
 
-# IMPORTACIÓN DE VISTAS DE TIPOS DE DOCUMENTO
-from .tipoDoc_views import TipoDocumentoViewSet
-
 # IMPORTACIÓN DE VISTAS DE ESTUDIANTES
 from .estudiante_views import EstudianteViewSet, fotos_estudiante, eliminar_fotos_estudiante
 
 # IMPORTACIÓN DE VISTAS DE PERFILES
 from .perfil_views import PerfilViewSet
 
-# IMPORTACIÓN DE VISTAS DE JORNADAS
-from .jornada_view import JornadaViewSet
-
-# IMPORTACIÓN DE VISTAS DE EPS
-from .eps_view import EpsView
-
-# IMPORTACIÓN DE VISTAS DE MÉTODOS DE PAGO
-from .metodo_pago_view import MetodoPagoView
-
-# IMPORTACIÓN DE VISTAS DE PÁGINAS
-from .pagina_view import PaginaView
-
-# IMPORTACIÓN DE VISTAS DE TIPOS DE DOCUMENTO PARA MATRÍCULA
-from .tipo_documento_matricula_view import TipoDocumentoMatriculaView
+# IMPORTACIÓN DE VISTAS DE TABLAS CATÁLOGO CONSOLIDADAS
+from .catalogos_views import (
+    EpsViewSet, JornadaViewSet, MetodoPagoViewSet,
+    PaginaViewSet, TipoDocumentoViewSet, TipoDocumentoMatriculaViewSet
+)
 
 # IMPORTACIÓN DE VISTAS DE DOCUMENTOS DE MATRÍCULA
 from .documento_matricula_view import guardar_documento, DocumentoMatriculaViewSet

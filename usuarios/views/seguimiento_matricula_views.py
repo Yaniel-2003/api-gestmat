@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 from ..models import Seguimiento_matricula
 from ..serializers import (
     SeguimientoMatriculaListSerializer,
@@ -62,16 +63,18 @@ class SeguimientoMatriculaViewSet(viewsets.ModelViewSet):
         estado = serializer.validated_data.get('estado')
         if estado == 'completado' and not serializer.validated_data.get('fecha_completado'):
             # Si es completado pero no hay fecha, asignamos ahora
-            serializer.save(usuario_actualiza=self.request.user, fecha_completado=timezone.now())
+            instance = serializer.save(usuario_actualiza=self.request.user, fecha_completado=timezone.now())
         else:
             # En otros casos, solo asignar usuario
-            serializer.save(usuario_actualiza=self.request.user)
+            instance = serializer.save(usuario_actualiza=self.request.user)
+        registrar_auditoria(self.request, "CREACIÓN SEGUIMIENTO", f"Se creó seguimiento para matrícula ID {instance.matricula_id} - Paso: {instance.paso}")
 
     def perform_update(self, serializer):
         
         estado = serializer.validated_data.get('estado')
         if estado == 'completado' and not serializer.validated_data.get('fecha_completado'):
-            serializer.save(usuario_actualiza=self.request.user, fecha_completado=timezone.now())
+            instance = serializer.save(usuario_actualiza=self.request.user, fecha_completado=timezone.now())
         else:
-            serializer.save(usuario_actualiza=self.request.user)
+            instance = serializer.save(usuario_actualiza=self.request.user)
+        registrar_auditoria(self.request, "ACTUALIZACIÓN SEGUIMIENTO", f"Se actualizó seguimiento ID {instance.id} - Estado: {instance.estado}")
 

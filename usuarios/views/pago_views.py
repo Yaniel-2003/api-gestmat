@@ -3,6 +3,7 @@ from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 from ..models import Pago
 from ..serializers import PagoListSerializer, PagoUpdateSerializer
 
@@ -45,3 +46,18 @@ class PagoViewSet(viewsets.ModelViewSet):
         if self.action in ('create','update','partial_update'):
             return PagoUpdateSerializer
         return PagoListSerializer
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se registró pago de ${instance.valor_pago} para matrícula {instance.matricula} (ID: {instance.id})")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el pago ID {instance.id} - Estado: {instance.estado_pago}")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        info = f"Pago ID {instance.id} - ${instance.valor_pago}"
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el {info}")
+        return Response({'mensaje': 'Pago eliminado correctamente'}, status=status.HTTP_200_OK)

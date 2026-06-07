@@ -8,7 +8,8 @@ import os
 from ..models import Usuario, Foto_Usuario
 from ..serializers import UsuarioListSerializer, UsuarioUpdateSerializer # CORREGIDO
 from backend.permissions import PermisoPorPerfil
-  
+from ..utils import registrar_auditoria
+ 
 
 # ----------------------------------------------------------
 # HELPERS DE PERMISOS - evita repetir la lógica en cada método
@@ -67,6 +68,14 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             )
         return super().update(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se registró el usuario {instance.username} ({instance.get_full_name()})")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el usuario {instance.username} (ID: {instance.id})")
+
     def destroy(self, request, *args, **kwargs):
         # Solo el administrador puede eliminar
         if not es_admin(request.user):
@@ -83,6 +92,9 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        nombre_usuario = instance.username
+        id_eliminado = instance.id
+
         # Borra fotos físicas antes de eliminar
         for foto in instance.fotos.all():
             if foto.archivo and os.path.isfile(foto.archivo.path):
@@ -90,6 +102,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             foto.delete()
 
         instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el usuario {nombre_usuario} (ID: {id_eliminado})")
         return Response({'mensaje': 'Usuario eliminado correctamente'}, status=status.HTTP_200_OK)
 
 
@@ -150,6 +163,9 @@ def fotos_usuario(request, id):
                 'url': request.build_absolute_uri(foto.archivo.url),
             })
 
+        if fotos_guardadas:
+            registrar_auditoria(request, "SUBIDA FOTOS", f"Se subieron {len(fotos_guardadas)} fotos para el usuario {usuario.username}")
+
         if not fotos_guardadas and errores:
             return Response({'errores': errores}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -178,4 +194,5 @@ def eliminar_foto_usuario(request, id, foto_id):
         os.remove(foto.archivo.path)
 
     foto.delete()
+    registrar_auditoria(request, "ELIMINAR FOTO", f"Se eliminó una foto (ID: {foto_id}) del usuario ID {id}")
     return Response({'mensaje': 'Foto eliminada correctamente'}, status=status.HTTP_200_OK)

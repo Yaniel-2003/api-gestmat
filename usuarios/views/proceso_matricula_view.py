@@ -1,7 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 from ..models import Proceso_matricula
 from ..serializers import ProcesoMatriculaConEstadoSerializer
 
@@ -29,3 +30,17 @@ class ProcesoMatriculaViewSet(viewsets.ModelViewSet):
         # Paso 3: Devolver la respuesta JSON
         return Response(serializer.data)
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se creó el paso de proceso '{instance.nombre_paso}'")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el paso '{instance.nombre_paso}' (ID: {instance.id})")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        nombre = instance.nombre_paso
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el paso de proceso '{nombre}'")
+        return Response({'mensaje': 'Paso de proceso eliminado correctamente'}, status=status.HTTP_200_OK)

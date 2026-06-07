@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 from rest_framework.utils import timezone
 from ..serializers import MatriculaListSerializer, MatriculaUpdateSerializer, EstudianteListSerializer, AcudienteListSerializer
 from ..models import Matricula, Foto_Acudiente, Foto_Estudiante, Estudiante, Acudiente
@@ -55,7 +56,18 @@ class MatriculaViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update']:
             return MatriculaUpdateSerializer
         return MatriculaListSerializer
-    
-    
 
-    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se creó matrícula para {instance.estudiante} - Año {instance.year_lectivo} (ID: {instance.id})")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó la matrícula ID {instance.id} - {instance.estudiante}")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        info = f"{instance.estudiante} - Año {instance.year_lectivo}"
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó la matrícula: {info}")
+        return Response({'mensaje': 'Matrícula eliminada correctamente'}, status=status.HTTP_200_OK)

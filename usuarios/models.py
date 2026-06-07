@@ -190,6 +190,11 @@ class Matricula(models.Model):
     estado          = models.BooleanField(default=True)
     observaciones   = models.TextField(null=True, blank=True)  
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Guardamos el estado anterior para detectar cambios en signals
+        self._estado_anterior = self.estado if self.pk else None
+
     class Meta:
         db_table = 'matriculas'
         verbose_name = 'Matrícula'
@@ -369,6 +374,12 @@ def crear_seguimientos_iniciales(sender, instance, created, **kwargs):
     if not created:
         return
 
+    # ── GESTIÓN AUTOMÁTICA DE CUPO ──
+    # Al crear una matrícula, decrementamos el cupo disponible del curso asignado
+    if instance.curso and instance.curso.cupo_disponible > 0:
+        instance.curso.cupo_disponible -= 1
+        instance.curso.save(update_fields=['cupo_disponible'])
+
     # Definimos los criterios de búsqueda para identificar los pasos en el catálogo.
     # Se usa 'key' y 'nombre' para tener flexibilidad en la búsqueda por icontains.
     pasos_iniciales = [
@@ -398,6 +409,35 @@ def crear_seguimientos_iniciales(sender, instance, created, **kwargs):
             )
 
 
+
+# ================================================================================
+# SIGNAL: GESTIÓN DE CUPO AL RETIRAR ESTUDIANTE
+# ================================================================================
+# Cuándo se ejecuta: Después de actualizar una Matrícula (UPDATE, no INSERT)
+# Por qué: Si la matrícula pasa de activa (True) a inactiva (False), significa
+# que el estudiante se retiró y debemos devolver el cupo al curso.
+# ================================================================================
+
+@receiver(post_save, sender=Matricula)
+def gestionar_cupo_retiro(sender, instance, created, **kwargs):
+    """
+    Al desactivar una matrícula (retiro del estudiante), incrementamos
+    el cupo disponible del curso. Solo actúa cuando el estado cambia
+    de True a False (no en cada guardado).
+    """
+    # No actuar en creaciones nuevas (eso lo maneja crear_seguimientos_iniciales)
+    if created:
+        return
+
+    # Solo actuar si el estado cambió de True a False (retiro)
+    estado_anterior = getattr(instance, '_estado_anterior', None)
+    if estado_anterior is True and instance.estado is False:
+        if instance.curso:
+            instance.curso.cupo_disponible += 1
+            instance.curso.save(update_fields=['cupo_disponible'])
+
+    # Actualizar el estado anterior para futuras comparaciones
+    instance._estado_anterior = instance.estado
 
 
 # ================================================================================

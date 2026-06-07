@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 from ..models import Estudiante, Foto_Estudiante
 from ..serializers import EstudianteListSerializer, EstudianteUpdateSerializer
 import os 
@@ -50,15 +51,26 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update']:
             return EstudianteUpdateSerializer
         return EstudianteListSerializer
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se registró el estudiante {instance.nombre_completo} (Documento: {instance.numero_documento})")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el estudiante {instance.nombre_completo} (ID: {instance.id})")
     
     def destroy(self, request, *args, **kwargs):
         estudiante = self.get_object()
+        nombre = estudiante.nombre_completo
+        doc = estudiante.numero_documento
 
         for foto in estudiante.fotos.all():
             if foto.archivo and os.path.isfile(foto.archivo.path):
                 os.remove(foto.archivo.path)
             foto.delete()
         estudiante.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el estudiante {nombre} (Doc: {doc})")
         return Response({'mensaje':'Estudiante eliminado correctamente'}, status=status.HTTP_200_OK)
     
 
@@ -109,6 +121,9 @@ def fotos_estudiante(request, id):
                 'id': foto.id,
                 'url': request.build_absolute_uri(foto.archivo.url),
             })
+
+        if fotos_guardadas:
+            registrar_auditoria(request, "SUBIDA FOTOS", f"Se subieron {len(fotos_guardadas)} fotos para el estudiante {estudiante.nombre_completo}")
         
         if not fotos_guardadas and errores:
             return Response({'errores': errores},status=status.HTTP_400_BAD_REQUEST)
@@ -131,4 +146,5 @@ def eliminar_fotos_estudiante(request, id, foto_id):
         os.remove(foto.archivo.path)
 
     foto.delete()
+    registrar_auditoria(request, "ELIMINAR FOTO", f"Se eliminó una foto (ID: {foto_id}) del estudiante ID {id}")
     return Response({'mensaje':'Fotoeliminada correctamente'}, status=status.HTTP_200_OK)

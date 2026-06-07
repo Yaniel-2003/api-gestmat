@@ -14,6 +14,7 @@ from ..serializers import (
 )
 
 from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
 
 
 # ─────────────────────────────────────────────
@@ -170,6 +171,7 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
             nombre_archivo=nombre_archivo,
             ruta_archivo=ruta_archivo
         )
+        registrar_auditoria(request, "SUBIDA DOCUMENTO", f"Se subió documento '{nombre_archivo}' para matrícula ID {documento.matricula_id}")
 
         # Retornamos datos detallados
         return Response(DocumentoMatriculaListSerializer(documento).data,status=status.HTTP_201_CREATED)
@@ -187,12 +189,17 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
         if documento.estado.lower() != 'pendiente':
             return Response({'error': ('Solo se pueden eliminar ''documentos pendientes')},status=status.HTTP_400_BAD_REQUEST)
 
+        # Capturamos info antes de eliminar
+        nombre_doc = documento.nombre_archivo
+        matricula_id_doc = documento.matricula_id
+
         # Eliminamos el archivo físico
         if (documento.ruta_archivo and os.path.exists(documento.ruta_archivo)):
             os.remove(documento.ruta_archivo)
 
         # Eliminamos registro de base de datos
         documento.delete()
+        registrar_auditoria(request, "ELIMINACIÓN DOCUMENTO", f"Se eliminó documento '{nombre_doc}' de matrícula ID {matricula_id_doc}")
         return Response({'mensaje': ('Documento eliminado correctamente')},status=status.HTTP_200_OK)
 
 
@@ -271,6 +278,7 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
         documento.fecha_revision = timezone.now()
 
         documento.save()
+        registrar_auditoria(request, "REVISIÓN DOCUMENTO", f"Documento '{documento.nombre_archivo}' marcado como {documento.estado}")
 
         # Retornamos documento actualizado
         return Response( DocumentoMatriculaListSerializer( documento ).data, status=status.HTTP_200_OK )

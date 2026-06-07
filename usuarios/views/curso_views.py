@@ -6,6 +6,7 @@ from django.db.models import Q
 from ..models import Curso
 from ..serializers import CursoUpdateSerializer, CursoListSerializer
 from backend.permissions import PermisoPorPerfil # Asegúrate de que esta ruta sea correcta en tu proyecto
+from ..utils import registrar_auditoria
 
 class CursoViewSet(viewsets.ModelViewSet):
 
@@ -42,6 +43,21 @@ class CursoViewSet(viewsets.ModelViewSet):
             return CursoUpdateSerializer
         return CursoListSerializer
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se creó el curso '{instance.nombre_curso}' - Grado {instance.grado}")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el curso '{instance.nombre_curso}' (ID: {instance.id})")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        nombre = instance.nombre_curso
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el curso '{nombre}'")
+        return Response({'mensaje': 'Curso eliminado correctamente'}, status=status.HTTP_200_OK)
+
     
 
     @action(detail=True, methods=['put'], url_path='actualizar-cupo')
@@ -66,6 +82,7 @@ class CursoViewSet(viewsets.ModelViewSet):
 
         curso.cupo_disponible = cupo_disponible
         curso.save()
+        registrar_auditoria(request, "ACTUALIZACIÓN CUPO", f"Se actualizó el cupo del curso '{curso.nombre_curso}' a {cupo_disponible}")
         
         return Response(CursoListSerializer(curso).data, status=status.HTTP_200_OK)
 
@@ -75,6 +92,7 @@ class CursoViewSet(viewsets.ModelViewSet):
         curso = self.get_object()
         curso.activo = not curso.activo
         curso.save()
+        registrar_auditoria(request, "CAMBIO ESTADO", f"Curso '{curso.nombre_curso}' {'activado' if curso.activo else 'desactivado'}")
 
         return Response({
             'mensaje': f'Curso {"activado" if curso.activo else "desactivado"} correctamente',
