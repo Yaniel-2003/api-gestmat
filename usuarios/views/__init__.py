@@ -33,7 +33,7 @@ from .perfil_views import PerfilViewSet
 # IMPORTACIÓN DE VISTAS DE TABLAS CATÁLOGO CONSOLIDADAS
 from .catalogos_views import (
     EpsViewSet, JornadaViewSet, MetodoPagoViewSet,
-    PaginaViewSet, TipoDocumentoViewSet, TipoDocumentoMatriculaViewSet
+    TipoDocumentoViewSet, TipoDocumentoMatriculaViewSet
 )
 
 # IMPORTACIÓN DE VISTAS DE DOCUMENTOS DE MATRÍCULA

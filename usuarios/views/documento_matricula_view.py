@@ -225,12 +225,12 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
         # Creamos el resultado
         resultado = [
             {
-                'id': tipo.id,
+                'id_tipo_documento_matricula': tipo.pk,
                 'nombre': tipo.descripcion,
 
                 # Verificamos si ya fue cargado
                 'ya_cargado': (
-                    tipo.id in tipos_ya_cargados
+                    tipo.pk in tipos_ya_cargados
                 ),
             }
 

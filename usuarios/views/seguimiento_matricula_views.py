@@ -76,5 +76,5 @@ class SeguimientoMatriculaViewSet(viewsets.ModelViewSet):
             instance = serializer.save(usuario_actualiza=self.request.user, fecha_completado=timezone.now())
         else:
             instance = serializer.save(usuario_actualiza=self.request.user)
-        registrar_auditoria(self.request, "ACTUALIZACIÓN SEGUIMIENTO", f"Se actualizó seguimiento ID {instance.id} - Estado: {instance.estado}")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN SEGUIMIENTO", f"Se actualizó seguimiento ID {instance.pk} - Estado: {instance.estado}")
 

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,6 +75,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    "USER_ID_FIELD": "id_usuario",
 }
 
 
@@ -120,14 +122,30 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gestmat',
-        'USER':'postgres',
-        'PASSWORD':'Ya1002981565.',
-        'HOST':'localhost',
-        'PORT':'5432',
+        'ENGINE': config('DB_ENGINE', default='mssql'),
+        'NAME': config('DB_NAME', default='gestmat'),
+        'USER': config('DB_USER', default=''),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
     }
 }
+
+# Solo agregar el puerto si está definido en el .env
+db_port = config('DB_PORT', default='')
+if db_port:
+    DATABASES['default']['PORT'] = db_port
+
+# Configuración específica para SQL Server
+if DATABASES['default']['ENGINE'] == 'mssql':
+    # Agregamos TrustServerCertificate=yes para evitar errores de handshake SSL local
+    extra_params = 'TrustServerCertificate=yes;'
+    if config('DB_TRUSTED_CONNECTION', default=False, cast=bool):
+        extra_params += 'Trusted_Connection=yes;'
+        
+    DATABASES['default']['OPTIONS'] = {
+        'driver': config('DB_DRIVER', default='ODBC Driver 17 for SQL Server'),
+        'extra_params': extra_params,
+    }
 
 
 # Password validation

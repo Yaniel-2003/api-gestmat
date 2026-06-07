@@ -15,6 +15,7 @@ from django.contrib.auth.models import AbstractUser
 
 # ── TABLA ACUDIENTES ──────────────────────────────────────────────
 class Acudiente(models.Model):
+    id_acudiente = models.BigAutoField(primary_key=True)
     tipo_documento   = models.ForeignKey('Tipo_documento', on_delete=models.SET_NULL, null=True, blank=True)
     usuario          = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True)
     numero_documento = models.CharField(max_length=20, null=True, blank=True)
@@ -24,30 +25,29 @@ class Acudiente(models.Model):
     email            = models.EmailField(max_length=50, null=True, blank=True, unique=True)
 
     class Meta:
-        db_table = 'acudientes'
-        verbose_name = 'Acudiente'
-        verbose_name_plural = 'Acudientes'
+        db_table = 'ACA_Acudientes'
+        managed = True
 
     def __str__(self):
         return self.nombre_completo or "Sin nombre"
 
 
 def Ruta_Foto_Acudientes(instance, filename):
-    return f'Acudientes/id_{instance.acudiente.id}/{filename}'
+    return f'Acudientes/id_{instance.acudiente.pk}/{filename}'
 
 class Foto_Acudiente(models.Model):
+    id_foto_acudiente = models.BigAutoField(primary_key=True)
     acudiente = models.ForeignKey('Acudiente', on_delete=models.CASCADE, related_name='fotos')
     archivo = models.ImageField(upload_to=Ruta_Foto_Acudientes)
     ruta_disco = models.CharField(max_length=500, null=True, blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        db_table = 'fotos_acudientes'
-        verbose_name = 'Foto de Acudiente'
-        verbose_name_plural = 'Fotos de Acudientes'
+        db_table = 'ACA_Fotos_Acudientes'
+        managed = True
 
     def __str__(self):
-        return f"Foto de {self.acudiente.nombre_completo} - ID: {self.id}"
+        return f"Foto de {self.acudiente.nombre_completo} - ID: {self.pk}"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -58,6 +58,7 @@ class Foto_Acudiente(models.Model):
 
 # ── TABLA CURSOS ──────────────────────────────────────────────────
 class Curso(models.Model):
+    id_curso = models.BigAutoField(primary_key=True)
     jornada         = models.ForeignKey('Jornada', on_delete=models.SET_NULL, null=True, blank=True)
     nombre_curso    = models.CharField(max_length=20, null=True, blank=True)
     grado           = models.CharField(max_length=10, null=True, blank=True)
@@ -66,9 +67,8 @@ class Curso(models.Model):
     cupo_disponible = models.IntegerField(default=30)
 
     class Meta:
-        db_table = 'cursos'
-        verbose_name = 'Curso'
-        verbose_name_plural = 'Cursos'
+        db_table = 'ACA_Cursos'
+        managed = True
 
     def __str__(self):
         return f"{self.nombre_curso} - Grado {self.grado}" if self.nombre_curso else "Sin nombre"
@@ -76,6 +76,7 @@ class Curso(models.Model):
 
 # ── TABLA DOCUMENTOS DE MATRICULA ────────────────────────────────
 class Documento_matricula(models.Model):
+    id_documento_matricula = models.BigAutoField(primary_key=True)
     matricula                = models.ForeignKey('Matricula', on_delete=models.SET_NULL, null=True, blank=True)
     tipo_documento_matricula = models.ForeignKey('Tipo_documento_matricula', on_delete=models.SET_NULL, null=True, blank=True)
     nombre_archivo           = models.CharField(max_length=255, null=True, blank=True)
@@ -98,9 +99,8 @@ class Documento_matricula(models.Model):
     fecha_revision = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = 'documentos_matricula'
-        verbose_name = 'Documento de Matrícula'
-        verbose_name_plural = 'Documentos de Matrícula'
+        db_table = 'MAT_Documentos_Matricula'
+        managed = True
 
     def __str__(self):
         return self.nombre_archivo or "Sin nombre"
@@ -108,14 +108,14 @@ class Documento_matricula(models.Model):
 
 # ── TABLA EPS ────────────────────────────────────────────────────
 class Eps(models.Model):
+    id_eps = models.BigAutoField(primary_key=True)
     nombre_eps = models.CharField(max_length=100, null=True, blank=True)
     telefono   = models.CharField(max_length=15, null=True, blank=True)
     direccion  = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'eps'
-        verbose_name = 'EPS'
-        verbose_name_plural = 'EPS'
+        managed = True
 
     def __str__(self):
         return self.nombre_eps or "Sin nombre"
@@ -123,6 +123,7 @@ class Eps(models.Model):
 
 # ── TABLA ESTUDIANTE ─────────────────────────────────────────────
 class Estudiante(models.Model):
+    id_estudiante = models.BigAutoField(primary_key=True)
     tipo_documento   = models.ForeignKey('Tipo_documento', on_delete=models.SET_NULL, null=True, blank=True)
     eps              = models.ForeignKey('Eps', on_delete=models.SET_NULL, null=True, blank=True)
     acudientes       = models.ManyToManyField('Acudiente', blank=True)
@@ -131,29 +132,28 @@ class Estudiante(models.Model):
     fecha_nacimiento = models.DateField(null=True, blank=True)
 
     class Meta:
-        db_table = 'estudiantes'
-        verbose_name = 'Estudiante'
-        verbose_name_plural = 'Estudiantes'
+        db_table = 'ACA_Estudiantes'
+        managed = True
 
     def __str__(self):
         return self.nombre_completo or "Sin nombre"
 
 
 def Ruta_Foto_Estudiante(instance, filename):
-    return f'Estudiante/id_{instance.estudiante.id}/{filename}'
+    return f'Estudiante/id_{instance.estudiante.pk}/{filename}'
 
 class Foto_Estudiante(models.Model):
+    id_foto_estudiante = models.BigAutoField(primary_key=True)
     estudiante = models.ForeignKey('Estudiante', on_delete=models.CASCADE, related_name='fotos')
     archivo = models.ImageField(upload_to=Ruta_Foto_Estudiante)
     ruta_disco = models.CharField(max_length=500, null=True, blank=True)
 
     class Meta:
-        db_table = 'fotos_estudiantes'
-        verbose_name = 'Foto de Estudiante'
-        verbose_name_plural = 'Fotos de Estudiantes'
+        db_table = 'ACA_Fotos_Estudiantes'
+        managed = True
 
     def __str__(self):
-        return f"Foto de {self.estudiante.nombre_completo} - ID: {self.id}"
+        return f"Foto de {self.estudiante.nombre_completo} - ID: {self.pk}"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -164,6 +164,7 @@ class Foto_Estudiante(models.Model):
 
 # ── TABLA JORNADA ────────────────────────────────────────────────
 class Jornada(models.Model):
+    id_jornada = models.BigAutoField(primary_key=True)
     nombre_jornada = models.CharField(max_length=50, null=True, blank=True)
     hora_inicio    = models.TimeField(null=True, blank=True)
     hora_fin       = models.TimeField(null=True, blank=True)
@@ -171,8 +172,7 @@ class Jornada(models.Model):
 
     class Meta:
         db_table = 'jornadas'
-        verbose_name = 'Jornada'
-        verbose_name_plural = 'Jornadas'
+        managed = True
 
     def __str__(self):
         return self.nombre_jornada or "Sin nombre"
@@ -180,6 +180,7 @@ class Jornada(models.Model):
 
 # ── TABLA DE MATRICULAS ──────────────────────────────────────────
 class Matricula(models.Model):
+    id_matricula = models.BigAutoField(primary_key=True)
     estudiante      = models.ForeignKey('Estudiante', on_delete=models.SET_NULL, null=True, blank=True)
     acudiente       = models.ForeignKey('Acudiente', on_delete=models.SET_NULL, null=True, blank=True)
     curso           = models.ForeignKey('Curso', on_delete=models.SET_NULL, null=True, blank=True)
@@ -196,9 +197,8 @@ class Matricula(models.Model):
         self._estado_anterior = self.estado if self.pk else None
 
     class Meta:
-        db_table = 'matriculas'
-        verbose_name = 'Matrícula'
-        verbose_name_plural = 'Matrículas'
+        db_table = 'MAT_Matriculas'
+        managed = True
 
     def __str__(self):
         return f"{self.estudiante} - {self.year_lectivo}" if self.year_lectivo else "Sin datos"
@@ -206,47 +206,14 @@ class Matricula(models.Model):
 
 # ── TABLA METODO DE PAGO ─────────────────────────────────────────
 class Metodo_pago(models.Model):
+    id_metodo_pago = models.BigAutoField(primary_key=True)
     nombre         = models.CharField(max_length=255, null=True, blank=True)
     descripcion    = models.TextField(null=True, blank=True)  
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'metodos_pago'
-        verbose_name = 'Método de Pago'
-        verbose_name_plural = 'Métodos de Pago'
-
-    def __str__(self):
-        return self.nombre or "Sin nombre"
-
-
-# ── TABLA PAGINAS ────────────────────────────────────────────────
-class Pagina(models.Model):
-    nombre_pagina  = models.CharField(max_length=100, null=True, blank=True)
-    ruta_pagina    = models.CharField(max_length=255, null=True, blank=True)
-    mostrar_pagina = models.BooleanField(default=False)
-    icono_pagina   = models.CharField(max_length=255, null=True, blank=True)
-    orden_pagina   = models.IntegerField(null=True, blank=True)
-    pagina_padre   = models.IntegerField(null=True, blank=True)
-
-    class Meta:
-        db_table = 'paginas'
-        verbose_name = 'Página'
-        verbose_name_plural = 'Páginas'
-
-    def __str__(self):
-        return self.nombre_pagina or "Sin nombre"
-
-
-# ── TABLA DE COMPONENTES ─────────────────────────────────────────
-class Componente(models.Model): 
-    pagina        = models.ForeignKey('Pagina', on_delete=models.SET_NULL, null=True, blank=True)
-    nombre        = models.CharField(max_length=100, null=True, blank=True)
-    identificador = models.CharField(max_length=100, null=True, blank=True)
-
-    class Meta:
-        db_table = 'componentes'
-        verbose_name = 'Componente'
-        verbose_name_plural = 'Componentes'
+        managed = True
 
     def __str__(self):
         return self.nombre or "Sin nombre"
@@ -254,20 +221,17 @@ class Componente(models.Model):
 
 # ── TABLA PERFIL ─────────────────────────────────────────────────
 class Perfil(models.Model):
+    id_perfil = models.BigAutoField(primary_key=True)
     nombre_perfil = models.CharField(max_length=50, null=True, blank=True)
-    pagina_inicio = models.ForeignKey('Pagina', on_delete=models.SET_NULL, null=True, blank=True)
     insert_perfil = models.BooleanField(default=False)
     update_perfil = models.BooleanField(default=False)
     delete_perfil = models.BooleanField(default=False)
     view_perfil   = models.BooleanField(default=False)
     estado        = models.BooleanField(default=True)
-    paginas       = models.ManyToManyField('Pagina', blank=True, related_name='perfiles')
-    componentes   = models.ManyToManyField('Componente', blank=True, related_name='perfiles')  
 
     class Meta:
-        db_table = 'perfiles'
-        verbose_name = 'Perfil'
-        verbose_name_plural = 'Perfiles'
+        db_table = 'SEC_Perfiles'
+        managed = True
 
     def __str__(self):
         return self.nombre_perfil or "Sin nombre"
@@ -291,9 +255,8 @@ class Pago(models.Model):
                 )
 
     class Meta:
-        db_table = 'pagos'
-        verbose_name = 'Pago'
-        verbose_name_plural = 'Pagos'
+        db_table = 'PAG_Pagos'
+        managed = True
 
     def __str__(self):
         return f"{self.matricula} - {self.fecha_pago}"
@@ -446,6 +409,7 @@ def gestionar_cupo_retiro(sender, instance, created, **kwargs):
 
 # ── TABLA PASOS PROCESO MATRICULA ────────────────────────────────
 class Proceso_matricula(models.Model):
+    id_proceso_matricula = models.BigAutoField(primary_key=True)
     nombre_paso = models.CharField(max_length=100, null=True, blank=True)
     descripcion = models.TextField(null=True, blank=True) 
     orden       = models.IntegerField()
@@ -456,9 +420,8 @@ class Proceso_matricula(models.Model):
 
 
     class Meta:
-        db_table = 'procesos_matricula'
-        verbose_name = 'Proceso de Matrícula'
-        verbose_name_plural = 'Procesos de Matrícula'
+        db_table = 'PRCM_Matricula'
+        managed = True
 
     def __str__(self):
         return self.nombre_paso or "Sin nombre"
@@ -466,6 +429,7 @@ class Proceso_matricula(models.Model):
 
 # ── TABLA SEGUIMIENTO DE MATRICULA ───────────────────────────────
 class Seguimiento_matricula(models.Model):
+    id_seguimiento_matricula = models.BigAutoField(primary_key=True)
     matricula         = models.ForeignKey('Matricula', on_delete=models.SET_NULL, null=True, blank=True)
     paso              = models.ForeignKey('Proceso_matricula', on_delete=models.SET_NULL, null=True, blank=True) 
     usuario_actualiza = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True)
@@ -485,9 +449,8 @@ class Seguimiento_matricula(models.Model):
     fecha_actualizacion = models.DateTimeField(auto_now=True)          
 
     class Meta:
-        db_table = 'seguimientos_matricula'
-        verbose_name = 'Seguimiento de Matrícula'
-        verbose_name_plural = 'Seguimientos de Matrícula'
+        db_table = 'MAT_Seguimientos_Matricula'
+        managed = True
 
     def __str__(self):
         return f"{self.matricula} - {self.paso} - {self.estado}"
@@ -495,27 +458,27 @@ class Seguimiento_matricula(models.Model):
 
 # ── TABLA DE TIPO DE DOCUMENTOS ──────────────────────────────────
 class Tipo_documento(models.Model):
+    id_tipo_documento = models.BigAutoField(primary_key=True)
     descripcion = models.CharField(max_length=50, null=True, blank=True)
     sigla = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
     class Meta:
         db_table = 'tipos_documento'
-        verbose_name = 'Tipo de Documento'
-        verbose_name_plural = 'Tipos de Documentos'
+        managed = True
 
     def __str__(self):
-        return self.descripcion or "Sin descripción"
+        return self.sigla or self.descripcion or "Sin descripción"
 
 
 # ── TIPOS DE DOCUMENTOS PARA MATRICULA ───────────────────────────
 class Tipo_documento_matricula(models.Model):
+    id_tipo_documento_matricula = models.BigAutoField(primary_key=True)
     descripcion = models.CharField(max_length=100, null=True, blank=True)
     obligatorio = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'tipos_documento_matricula'
-        verbose_name = 'Tipo de Documento Matrícula'
-        verbose_name_plural = 'Tipos de Documentos Matrícula'
+        managed = True
 
     def __str__(self):
         return self.descripcion or "Sin descripción"
@@ -523,6 +486,7 @@ class Tipo_documento_matricula(models.Model):
 
 # ── TABLA TRAZABILIDAD ───────────────────────────────────────────
 class Trazabilidad(models.Model):
+    id_trazabilidad = models.BigAutoField(primary_key=True)
     usuario     = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True)
     accion      = models.CharField(max_length=100, null=True, blank=True)
     descripcion = models.TextField(null=True, blank=True)  
@@ -531,9 +495,8 @@ class Trazabilidad(models.Model):
     dispositivo = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
-        db_table = 'trazabilidad'
-        verbose_name = 'Trazabilidad'
-        verbose_name_plural = 'Trazabilidades'
+        db_table = 'AUD_Trazabilidad'
+        managed = True
 
     def __str__(self):
         return f"{self.usuario} - {self.accion}" if self.accion else "Sin acción"
@@ -541,6 +504,7 @@ class Trazabilidad(models.Model):
 
 # ── TABLA DE USUARIOS ────────────────────────────────────────────
 class Usuario(AbstractUser):
+    id_usuario = models.BigAutoField(primary_key=True)
     perfil          = models.ForeignKey('Perfil', on_delete=models.SET_NULL, null=True, blank=True)
     tipo_documento  = models.ForeignKey('Tipo_documento', on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -561,29 +525,28 @@ class Usuario(AbstractUser):
     )
 
     class Meta:
-        db_table = 'usuarios'
-        verbose_name = 'Usuario'
-        verbose_name_plural = 'Usuarios'
+        db_table = 'SEC_Usuarios'
+        managed = True
 
     def __str__(self):
         return self.get_full_name() or self.username or "Sin nombre"
     
 
 def Ruta_Foto_Usuario(instance, filename):
-    return f'Usuario/id_{instance.usuario.id}/{filename}'
+    return f'Usuario/id_{instance.usuario.pk}/{filename}'
 
 class Foto_Usuario(models.Model):
+    id_foto_usuario = models.BigAutoField(primary_key=True)
     usuario = models.ForeignKey('Usuario', on_delete=models.CASCADE, related_name='fotos')
     archivo = models.ImageField(upload_to=Ruta_Foto_Usuario)
     ruta_disco = models.CharField(max_length=500, null=True, blank=True)
 
     class Meta:
-        db_table = 'fotos_usuarios'
-        verbose_name = 'Foto de Usuario'
-        verbose_name_plural = 'Fotos de Usuarios'
+        db_table = 'SEC_Fotos_Usuarios'
+        managed = True
 
     def __str__(self):
-        return f"Foto de {self.usuario.get_full_name() or self.usuario.username} - ID: {self.id}"
+        return f"Foto de {self.usuario.get_full_name() or self.usuario.username} - ID: {self.pk}"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

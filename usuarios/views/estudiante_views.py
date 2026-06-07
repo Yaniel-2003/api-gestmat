@@ -58,7 +58,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el estudiante {instance.nombre_completo} (ID: {instance.id})")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el estudiante {instance.nombre_completo} (ID: {instance.pk})")
     
     def destroy(self, request, *args, **kwargs):
         estudiante = self.get_object()
@@ -89,7 +89,7 @@ def fotos_estudiante(request, id):
         fotos = estudiante.fotos.all().order_by('-subida_el')
         data = [
             {
-                'id': foto.id,
+                'id_foto_acudiente': foto.pk,
                 'url':request.build_absolute_uri(foto.archivo.url),
                 'subida_el':foto.subida_el,
             }
@@ -118,7 +118,7 @@ def fotos_estudiante(request, id):
             foto.archivo.save(archivo.name, archivo, save=True)
 
             fotos_guardadas.append({
-                'id': foto.id,
+                'id_foto_acudiente': foto.pk,
                 'url': request.build_absolute_uri(foto.archivo.url),
             })
 

@@ -7,8 +7,9 @@ from django.db import transaction
 # ----------------------------------------------------------
 
 class BaseSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='pk')
     class Meta:
-        read_only_fields = ['id']
+        pass
 
 
 # ----------------------------------------------------------
@@ -19,40 +20,34 @@ class BaseSerializer(serializers.ModelSerializer):
 class EpsSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Eps
-        fields = ['id', 'nombre_eps', 'telefono', 'direccion']
+        fields = ['id', 'id_eps', 'nombre_eps', 'telefono', 'direccion']
 
 
 class JornadaSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Jornada
-        fields = ['id', 'nombre_jornada', 'hora_inicio', 'hora_fin', 'descripcion']
+        fields = ['id', 'id_jornada', 'nombre_jornada', 'hora_inicio', 'hora_fin', 'descripcion']
 
 
 class MetodoPagoSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Metodo_pago
-        fields = ['id', 'nombre', 'descripcion', 'fecha_creacion']
-
-
-class PaginaSerializer(BaseSerializer):
-    class Meta(BaseSerializer.Meta):
-        model  = Pagina
-        fields = ['id', 'nombre_pagina', 'ruta_pagina', 'mostrar_pagina', 'icono_pagina', 'orden_pagina', 'pagina_padre']
+        fields = ['id', 'id_metodo_pago', 'nombre', 'descripcion', 'fecha_creacion']
 
 
 class ProcesoMatriculaSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Proceso_matricula
-        fields = ['id', 'nombre_paso', 'descripcion', 'orden', 'obligatorio', 'activo', 'icono', 'color']
+        fields = ['id', 'id_proceso_matricula', 'nombre_paso', 'descripcion', 'orden', 'obligatorio', 'activo', 'icono', 'color']
 
 
-class ProcesoMatriculaConEstadoSerializer(serializers.ModelSerializer):
+class ProcesoMatriculaConEstadoSerializer(BaseSerializer):
     # definimos un campo extra que no existe en el modelo pero lo queremos en el json
     estado_paso = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta(BaseSerializer.Meta):
         model = Proceso_matricula
-        fields = ['id', 'nombre_paso', 'orden', 'icono', 'color', 'estado_paso']
+        fields = ['id', 'id_proceso_matricula', 'nombre_paso', 'orden', 'icono', 'color', 'estado_paso']
 
     def get_estado_paso(self, obj):
         """
@@ -82,32 +77,13 @@ class ProcesoMatriculaConEstadoSerializer(serializers.ModelSerializer):
 class TipoDocumentoMatriculaSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Tipo_documento_matricula
-        fields = ['id', 'descripcion', 'obligatorio']
+        fields = ['id', 'id_tipo_documento_matricula', 'descripcion', 'obligatorio']
 
 
 class TipoDocumentoSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Tipo_documento
-        fields = ['id', 'descripcion', 'sigla']
-
-
-# ----------------------------------------------------------
-# NIVEL 2 - COMPONENTE
-# ----------------------------------------------------------
-
-class ComponenteListSerializer(BaseSerializer):
-    pagina = PaginaSerializer()
-
-    class Meta(BaseSerializer.Meta):
-        model  = Componente
-        fields = ['id', 'pagina', 'nombre', 'identificador']
-
-
-class ComponenteUpdateSerializer(serializers.ModelSerializer):
-    """Create y Update comparten este serializer."""
-    class Meta:
-        model  = Componente
-        fields = ['pagina', 'nombre', 'identificador']
+        fields = ['id', 'id_tipo_documento', 'descripcion', 'sigla']
 
 
 # ----------------------------------------------------------
@@ -119,7 +95,7 @@ class CursoListSerializer(BaseSerializer):
 
     class Meta(BaseSerializer.Meta):
         model  = Curso
-        fields = ['id', 'jornada', 'nombre_curso', 'grado', 'activo', 'cupo_total', 'cupo_disponible']
+        fields = ['id', 'id_curso', 'jornada', 'nombre_curso', 'grado', 'activo', 'cupo_total', 'cupo_disponible']
 
 
 class CursoUpdateSerializer(serializers.ModelSerializer):
@@ -143,18 +119,15 @@ class CursoUpdateSerializer(serializers.ModelSerializer):
 # ----------------------------------------------------------
 
 class PerfilListSerializer(BaseSerializer):
-    paginas     = PaginaSerializer(many=True)
-    componentes = ComponenteListSerializer(many=True)
-
     class Meta(BaseSerializer.Meta):
         model  = Perfil
-        fields = ['id', 'nombre_perfil', 'pagina_inicio', 'insert_perfil', 'update_perfil', 'delete_perfil', 'view_perfil','estado', 'paginas', 'componentes']
+        fields = ['id', 'id_perfil', 'nombre_perfil', 'insert_perfil', 'update_perfil', 'delete_perfil', 'view_perfil', 'estado']
 
 
 class PerfilUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Perfil
-        fields = ['nombre_perfil', 'pagina_inicio', 'insert_perfil', 'update_perfil', 'delete_perfil', 'view_perfil','estado', 'paginas', 'componentes']
+        fields = ['nombre_perfil', 'insert_perfil', 'update_perfil', 'delete_perfil', 'view_perfil', 'estado']
 
 
 # ----------------------------------------------------------
@@ -164,14 +137,14 @@ class PerfilUpdateSerializer(serializers.ModelSerializer):
 class FotoUsuarioSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Foto_Usuario
-        fields = ['id', 'archivo']
+        fields = ['id', 'id_foto_usuario', 'archivo']
 
 
 class UsuarioBasicoSerializer(BaseSerializer):
     """Solo para anidar en otros serializers, nunca para escribir."""
     class Meta(BaseSerializer.Meta):
         model  = Usuario
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'id_usuario', 'username', 'first_name', 'last_name', 'email']
 
 
 class UsuarioListSerializer(BaseSerializer):
@@ -182,11 +155,11 @@ class UsuarioListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Usuario
         fields = [
-            'id', 'username', 'first_name', 'last_name', 'email',
+            'id', 'id_usuario', 'username', 'first_name', 'last_name', 'email',
             'telefono', 'num_documento', 'fotos',
             'is_active', 'date_joined', 'perfil', 'tipo_documento',
         ]
-        read_only_fields = ['id', 'date_joined']
+        read_only_fields = ['id_usuario', 'date_joined']
 
 
 class UsuarioUpdateSerializer(serializers.ModelSerializer):
@@ -207,7 +180,7 @@ class UsuarioUpdateSerializer(serializers.ModelSerializer):
         # Excluye el propio usuario en updates
         qs = Usuario.objects.filter(username=value)
         if self.instance:
-            qs = qs.exclude(id=self.instance.id)
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError('Este usuario ya existe')
         return value
@@ -215,7 +188,7 @@ class UsuarioUpdateSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         qs = Usuario.objects.filter(email=value)
         if self.instance:
-            qs = qs.exclude(id=self.instance.id)
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError('Este email ya está en uso')
         return value
@@ -253,7 +226,7 @@ class TrazabilidadSerializer(BaseSerializer):
 
     class Meta(BaseSerializer.Meta):
         model  = Trazabilidad
-        fields = ['id', 'usuario', 'accion', 'descripcion', 'fecha_hora', 'ip_origen', 'dispositivo']
+        fields = ['id', 'id_trazabilidad', 'usuario', 'accion', 'descripcion', 'fecha_hora', 'ip_origen', 'dispositivo']
 
 
 # ----------------------------------------------------------
@@ -263,7 +236,7 @@ class TrazabilidadSerializer(BaseSerializer):
 class FotoAcudienteSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Foto_Acudiente
-        fields = ['id', 'archivo', 'fecha']
+        fields = ['id', 'id_foto_acudiente', 'archivo', 'fecha']
 
 
 class AcudienteListSerializer(BaseSerializer):
@@ -274,7 +247,7 @@ class AcudienteListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Acudiente
         fields = [
-            'id', 'tipo_documento', 'usuario', 'numero_documento',
+            'id', 'id_acudiente', 'tipo_documento', 'usuario', 'numero_documento',
             'nombre_completo', 'parentesco', 'telefono', 'email', 'fotos',
         ]
 
@@ -297,7 +270,7 @@ class AcudienteUpdateSerializer(serializers.ModelSerializer):
         # Excluye el propio acudiente en updates
         qs = Acudiente.objects.filter(numero_documento=value)
         if self.instance:
-            qs = qs.exclude(id=self.instance.id)
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError('Ya existe un acudiente con este documento')
         return value
@@ -310,7 +283,7 @@ class AcudienteUpdateSerializer(serializers.ModelSerializer):
 class FotoEstudianteSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Foto_Estudiante
-        fields = ['id', 'archivo']
+        fields = ['id', 'id_foto_estudiante', 'archivo']
 
 
 class EstudianteListSerializer(BaseSerializer):
@@ -322,7 +295,7 @@ class EstudianteListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Estudiante
         fields = [
-            'id', 'tipo_documento', 'eps', 'acudientes',
+            'id', 'id_estudiante', 'tipo_documento', 'eps', 'acudientes',
             'numero_documento', 'nombre_completo', 'fecha_nacimiento', 'fotos',
         ]
 
@@ -340,7 +313,7 @@ class EstudianteUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('El número de documento debe contener solo números')
         qs = Estudiante.objects.filter(numero_documento=value)
         if self.instance:
-            qs = qs.exclude(id=self.instance.id)
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError('Ya existe un estudiante con este documento')
         return value
@@ -359,7 +332,7 @@ class MatriculaListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Matricula
         fields = [
-            'id', 'estudiante', 'acudiente', 'curso', 'jornada',
+            'id', 'id_matricula', 'estudiante', 'acudiente', 'curso', 'jornada',
             'year_lectivo', 'fecha_matricula', 'fecha_inicio', 'estado', 'observaciones',
         ]
 
@@ -417,7 +390,7 @@ class MatriculaUpdateSerializer(serializers.ModelSerializer):
         # 3. Si estamos ACTUALIZANDO (un registro que ya existe)
         elif self.instance:
             estudiante_obj = getattr(self.instance, 'estudiante', None)
-            qs = Matricula.objects.filter(estudiante=estudiante_obj, year_lectivo=year_lectivo).exclude(id=self.instance.id)
+            qs = Matricula.objects.filter(estudiante=estudiante_obj, year_lectivo=year_lectivo).exclude(pk=self.instance.pk)
             
             if qs.exists():
                 raise serializers.ValidationError('Este registro ya existe para el año lectivo indicado.')
@@ -438,7 +411,7 @@ class DocumentoMatriculaListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Documento_matricula
         fields = [
-            'id', 'matricula', 'tipo_documento_matricula', 'nombre_archivo',
+            'id', 'id_documento_matricula', 'matricula', 'tipo_documento_matricula', 'nombre_archivo',
             'ruta_archivo', 'fecha_carga', 'fecha_entrega', 'estado',
             'observacion', 'usuario_carga', 'usuario_revisa', 'fecha_revision',
         ]
@@ -465,7 +438,7 @@ class PagoListSerializer(BaseSerializer):
 
     class Meta(BaseSerializer.Meta):
         model  = Pago
-        fields = ['id', 'matricula', 'fecha_pago', 'valor_pago', 'metodo_pago', 'estado_pago']
+        fields = ['id', 'id_pago', 'matricula', 'fecha_pago', 'valor_pago', 'metodo_pago', 'estado_pago']
 
 
 class PagoUpdateSerializer(serializers.ModelSerializer):
@@ -506,7 +479,7 @@ class SeguimientoMatriculaListSerializer(BaseSerializer):
     class Meta(BaseSerializer.Meta):
         model  = Seguimiento_matricula
         fields = [
-            'id', 'matricula', 'paso', 'usuario_actualiza', 'estado',
+            'id', 'id_seguimiento_matricula', 'matricula', 'paso', 'usuario_actualiza', 'estado',
             'fecha_inicio', 'fecha_completado', 'observacion', 'fecha_actualizacion',
         ]
 

@@ -62,7 +62,7 @@ class AcudienteViewSet(viewsets.ModelViewSet):
         registrar_auditoria(
             self.request, 
             "ACTUALIZACIÓN", 
-            f"Se modificaron datos del acudiente {instance.nombre_completo} (ID: {instance.id})"
+            f"Se modificaron datos del acudiente {instance.nombre_completo} (ID: {instance.pk})"
         )
 
     # --- TRAZABILIDAD: ELIMINAR ---
@@ -106,7 +106,7 @@ def fotos_acudiente(request, id):
         fotos = acudiente.fotos.all().order_by('-subida_el')
         data = [
             {
-                'id': foto.id,
+                'id_foto_acudiente': foto.pk,
                 'url': request.build_absolute_uri(foto.archivo.url),
                 'subida_el': foto.subida_el,
             } for foto in fotos
@@ -128,7 +128,7 @@ def fotos_acudiente(request, id):
 
             foto = Foto_Acudiente(acudiente=acudiente)
             foto.archivo.save(archivo.name, archivo, save=True)
-            fotos_guardadas.append({'id': foto.id, 'url': request.build_absolute_uri(foto.archivo.url)})
+            fotos_guardadas.append({'id_foto_acudiente': foto.pk, 'url': request.build_absolute_uri(foto.archivo.url)})
 
         if fotos_guardadas:
             # TRAZABILIDAD: SUBIDA DE ARCHIVOS

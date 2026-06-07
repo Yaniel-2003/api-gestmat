@@ -14,7 +14,7 @@ class PerfilViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def get_queryset(self):
-        queryset = Perfil.objects.select_related('pagina_inicio').prefetch_related('paginas','Componentes').all()
+        queryset = Perfil.objects.all()
 
         #Capturamos los parametros que se van a buscar
         perfilId = self.request.query_params.get('id')
@@ -47,7 +47,7 @@ class PerfilViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el perfil '{instance.nombre_perfil}' (ID: {instance.id})")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el perfil '{instance.nombre_perfil}' (ID: {instance.pk})")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

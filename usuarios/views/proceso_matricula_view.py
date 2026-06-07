@@ -36,7 +36,7 @@ class ProcesoMatriculaViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el paso '{instance.nombre_paso}' (ID: {instance.id})")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el paso '{instance.nombre_paso}' (ID: {instance.pk})")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

@@ -49,7 +49,7 @@ class CursoViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el curso '{instance.nombre_curso}' (ID: {instance.id})")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el curso '{instance.nombre_curso}' (ID: {instance.pk})")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

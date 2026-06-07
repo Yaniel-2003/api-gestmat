@@ -1,7 +1,6 @@
 from django.contrib import admin
 from .models import (
     Acudiente,
-    Componente,
     Curso,
     Documento_matricula,
     Eps,
@@ -9,7 +8,6 @@ from .models import (
     Jornada,
     Matricula,
     Metodo_pago,
-    Pagina,
     Pago,
     Perfil,
     Proceso_matricula,
@@ -21,7 +19,6 @@ from .models import (
 )
 
 admin.site.register(Acudiente)
-admin.site.register(Componente)
 admin.site.register(Curso)
 admin.site.register(Documento_matricula)
 admin.site.register(Eps)
@@ -29,7 +26,6 @@ admin.site.register(Estudiante)
 admin.site.register(Jornada)
 admin.site.register(Matricula)
 admin.site.register(Metodo_pago)
-admin.site.register(Pagina)
 admin.site.register(Pago)
 admin.site.register(Perfil)
 admin.site.register(Proceso_matricula)

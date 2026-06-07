@@ -59,11 +59,11 @@ class MatriculaViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "CREACIÓN", f"Se creó matrícula para {instance.estudiante} - Año {instance.year_lectivo} (ID: {instance.id})")
+        registrar_auditoria(self.request, "CREACIÓN", f"Se creó matrícula para {instance.estudiante} - Año {instance.year_lectivo} (ID: {instance.pk})")
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó la matrícula ID {instance.id} - {instance.estudiante}")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó la matrícula ID {instance.pk} - {instance.estudiante}")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

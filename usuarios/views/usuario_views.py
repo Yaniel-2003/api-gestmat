@@ -19,7 +19,7 @@ def es_admin(user):
     return user.perfil.nombre_perfil == 'Administrador'
 
 def es_propio_usuario(user, id):
-    return user.id == id
+    return user.pk == id
 
 
 # ----------------------------------------------------------
@@ -40,7 +40,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         if es_admin(self.request.user):
             return qs.all()
         # Cualquier otro perfil solo se ve a sí mismo
-        return qs.filter(id=self.request.user.id)
+        return qs.filter(id=self.request.user.pk)
 
     def get_serializer_class(self):
         # CORREGIDO: Usar UsuarioUpdateSerializer en lugar de Login
@@ -51,7 +51,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         # No administrador solo puede ver su propio detalle
         instance = self.get_object()
-        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.id):
+        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.pk):
             return Response(
                 {'error': 'No puedes ver datos de otro usuario'},
                 status=status.HTTP_403_FORBIDDEN
@@ -61,12 +61,19 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         # No administrador solo puede editarse a sí mismo
         instance = self.get_object()
-        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.id):
+        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.pk):
             return Response(
                 {'error': 'No puedes editar datos de otro usuario'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().update(request, *args, **kwargs)
+        
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Retornamos la representación con el serializador de listado (que incluye id/id_usuario y datos anidados)
+        return Response(UsuarioListSerializer(instance).data)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -74,7 +81,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el usuario {instance.username} (ID: {instance.id})")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el usuario {instance.username} (ID: {instance.pk})")
 
     def destroy(self, request, *args, **kwargs):
         # Solo el administrador puede eliminar
@@ -86,14 +93,14 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
 
         # Un administrador no puede eliminarse a sí mismo
-        if es_propio_usuario(request.user, instance.id):
+        if es_propio_usuario(request.user, instance.pk):
             return Response(
                 {'error': 'No puedes eliminarte a ti mismo'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         nombre_usuario = instance.username
-        id_eliminado = instance.id
+        id_eliminado = instance.pk
 
         # Borra fotos físicas antes de eliminar
         for foto in instance.fotos.all():
@@ -133,7 +140,7 @@ def fotos_usuario(request, id):
         fotos = usuario.fotos.all()
         data  = [
             {
-                'id'  : foto.id,
+                'id'  : foto.pk,
                 'url' : request.build_absolute_uri(foto.archivo.url),
             }
             for foto in fotos
@@ -159,7 +166,7 @@ def fotos_usuario(request, id):
             foto = Foto_Usuario(usuario=usuario)
             foto.archivo.save(archivo.name, archivo, save=True)
             fotos_guardadas.append({
-                'id' : foto.id,
+                'id' : foto.pk,
                 'url': request.build_absolute_uri(foto.archivo.url),
             })
 

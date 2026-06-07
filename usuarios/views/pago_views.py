@@ -49,15 +49,15 @@ class PagoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "CREACIÓN", f"Se registró pago de ${instance.valor_pago} para matrícula {instance.matricula} (ID: {instance.id})")
+        registrar_auditoria(self.request, "CREACIÓN", f"Se registró pago de ${instance.valor_pago} para matrícula {instance.matricula} (ID: {instance.pk})")
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el pago ID {instance.id} - Estado: {instance.estado_pago}")
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el pago ID {instance.pk} - Estado: {instance.estado_pago}")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        info = f"Pago ID {instance.id} - ${instance.valor_pago}"
+        info = f"Pago ID {instance.pk} - ${instance.valor_pago}"
         instance.delete()
         registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el {info}")
         return Response({'mensaje': 'Pago eliminado correctamente'}, status=status.HTTP_200_OK)
