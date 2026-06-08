@@ -13,7 +13,7 @@
 # ================================================================================
 
 # IMPORTACIÓN DE VISTAS DE AUTENTICACIÓN
-from .auth_views import LoginView, LogoutView
+from .auth_views import LoginView, LogoutView, RequestPasswordResetView, ConfirmPasswordResetView
 
 # IMPORTACIÓN DE VISTAS DE ACUDIENTES
 from .acudiente_views import AcudienteViewSet, fotos_acudiente, eliminar_foto_acudiente
