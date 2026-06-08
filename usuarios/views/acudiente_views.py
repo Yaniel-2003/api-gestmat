@@ -50,6 +50,13 @@ class AcudienteViewSet(viewsets.ModelViewSet):
     # --- TRAZABILIDAD: CREAR ---
     def perform_create(self, serializer):
         instance = serializer.save(usuario=self.request.user)
+        
+        # Guardar la foto del acudiente si se envió una
+        foto_archivo = self.request.FILES.get('foto_acudiente')
+        if foto_archivo:
+            foto_obj = Foto_Acudiente(acudiente=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+
         registrar_auditoria(
             self.request, 
             "CREACIÓN", 
@@ -59,11 +66,28 @@ class AcudienteViewSet(viewsets.ModelViewSet):
     # --- TRAZABILIDAD: ACTUALIZAR ---
     def perform_update(self, serializer):
         instance = serializer.save()
+        
+        # Guardar la foto del acudiente si se envió una nueva
+        foto_archivo = self.request.FILES.get('foto_acudiente')
+        if foto_archivo:
+            # Limpiamos las fotos anteriores para que solo quede la última activa
+            for vieja_foto in instance.fotos.all():
+                if vieja_foto.archivo and os.path.isfile(vieja_foto.archivo.path):
+                    try:
+                        os.remove(vieja_foto.archivo.path)
+                    except Exception:
+                        pass
+                vieja_foto.delete()
+                
+            foto_obj = Foto_Acudiente(acudiente=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+
         registrar_auditoria(
             self.request, 
             "ACTUALIZACIÓN", 
             f"Se modificaron datos del acudiente {instance.nombre_completo} (ID: {instance.pk})"
         )
+
 
     # --- TRAZABILIDAD: ELIMINAR ---
     def destroy(self, request, *args, **kwargs):
@@ -103,12 +127,12 @@ def fotos_acudiente(request, id):
         return Response({'error': 'Acudiente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        fotos = acudiente.fotos.all().order_by('-subida_el')
+        fotos = acudiente.fotos.all().order_by('-fecha')
         data = [
             {
                 'id_foto_acudiente': foto.pk,
                 'url': request.build_absolute_uri(foto.archivo.url),
-                'subida_el': foto.subida_el,
+                'fecha': foto.fecha,
             } for foto in fotos
         ]
         return Response(data, status=status.HTTP_200_OK)

@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
 from backend.permissions import PermisoPorPerfil
 from ..utils import registrar_auditoria
@@ -13,6 +13,7 @@ import os
 
 class MatriculaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, PermisoPorPerfil]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         #Traemos todos los datos 

@@ -350,6 +350,11 @@ class MatriculaUpdateSerializer(serializers.ModelSerializer):
         #Traemos los datos anidados
         datos_estudiante = validated_data.pop('estudiante')
         datos_acudiente = validated_data.pop('acudiente')
+
+        request = self.context.get('request')
+        foto_estudiante = request.FILES.get('foto_estudiante') if request else None
+        foto_acudiente = request.FILES.get('foto_acudiente') if request else None
+        
         #usamos un bloque atomico si algo falla no guarda nada 
         with transaction.atomic():
             nuevo_acudiente = Acudiente.objects.create(**datos_acudiente)
@@ -358,6 +363,13 @@ class MatriculaUpdateSerializer(serializers.ModelSerializer):
             nuevo_estudiante.acudientes.add(nuevo_acudiente)
             #creamos el estudiante y le asignamos el acudiente
             
+            if foto_acudiente: 
+                foto_acu_obj = Foto_Acudiente(acudiente=nuevo_acudiente)
+                foto_acu_obj.archivo.save(foto_acudiente.name, foto_acudiente, save=True)
+            if foto_estudiante:
+                foto_estu_obj = Foto_Estudiante(estudiante=nuevo_estudiante)
+                foto_estu_obj.archivo.save(foto_estudiante.name, foto_estudiante, save=True)
+
             #Ya por ultimo creamos la matricual 
             matricula = Matricula.objects.create(
                 estudiante=nuevo_estudiante,

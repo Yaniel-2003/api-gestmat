@@ -54,10 +54,30 @@ class EstudianteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_estudiante')
+        if foto_archivo:
+            foto_obj = Foto_Estudiante(estudiante=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+
         registrar_auditoria(self.request, "CREACIÓN", f"Se registró el estudiante {instance.nombre_completo} (Documento: {instance.numero_documento})")
 
     def perform_update(self, serializer):
         instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_estudiante')
+        if foto_archivo:
+            for vieja_foto in instance.fotos.all():
+                if vieja_foto.archivo and os.path.isfile(vieja_foto.archivo.path):
+                    try:
+                        os.remove(vieja_foto.archivo.path)
+                    except Exception:
+                        pass
+                vieja_foto.delete()
+            
+            foto_obj = Foto_Estudiante(estudiante=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+                
         registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el estudiante {instance.nombre_completo} (ID: {instance.pk})")
     
     def destroy(self, request, *args, **kwargs):
@@ -86,12 +106,12 @@ def fotos_estudiante(request, id):
         return Response({'error': 'Estudiante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
-        fotos = estudiante.fotos.all().order_by('-subida_el')
+        fotos = estudiante.fotos.all()
         data = [
             {
-                'id_foto_acudiente': foto.pk,
-                'url':request.build_absolute_uri(foto.archivo.url),
-                'subida_el':foto.subida_el,
+                'id_foto_estudiante': foto.pk,
+                'url': request.build_absolute_uri(foto.archivo.url),
+                'fecha': None,
             }
             for foto in fotos
         ]
