@@ -12,6 +12,7 @@ from ..utils import registrar_auditoria
 class PerfilViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, PermisoPorPerfil]
     lookup_field = 'id'
+    pagination_class = None
 
     def get_queryset(self):
         queryset = Perfil.objects.all()

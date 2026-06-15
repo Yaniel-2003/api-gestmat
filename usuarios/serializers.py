@@ -351,6 +351,8 @@ class MatriculaUpdateSerializer(serializers.ModelSerializer):
         datos_estudiante = validated_data.pop('estudiante')
         datos_acudiente = validated_data.pop('acudiente')
 
+        acudientes_adicionales = datos_estudiante.pop('acudientes',None)
+
         request = self.context.get('request')
         foto_estudiante = request.FILES.get('foto_estudiante') if request else None
         foto_acudiente = request.FILES.get('foto_acudiente') if request else None
@@ -360,6 +362,8 @@ class MatriculaUpdateSerializer(serializers.ModelSerializer):
             nuevo_acudiente = Acudiente.objects.create(**datos_acudiente)
             nuevo_estudiante = Estudiante.objects.create(**datos_estudiante)
 
+            if acudientes_adicionales:
+                nuevo_estudiante.acudientes.set(acudientes_adicionales)
             nuevo_estudiante.acudientes.add(nuevo_acudiente)
             #creamos el estudiante y le asignamos el acudiente
             

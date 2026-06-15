@@ -4,6 +4,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 import os
+from django.db.models import Q
 
 from ..models import Usuario, Foto_Usuario
 from ..serializers import UsuarioListSerializer, UsuarioUpdateSerializer # CORREGIDO
@@ -37,10 +38,19 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Usuario.objects.select_related('perfil', 'tipo_documento')
-        if es_admin(self.request.user):
-            return qs.all()
-        # Cualquier otro perfil solo se ve a sí mismo
-        return qs.filter(id=self.request.user.pk)
+        if not es_admin(self.request.user):
+            # Cualquier otro perfil solo se ve a sí mismo
+            return qs.filter(pk=self.request.user.pk)
+            
+        busqueda = self.request.query_params.get('buscar')
+        if busqueda:
+            qs = qs.filter(
+                Q(username__icontains=busqueda) |
+                Q(first_name__icontains=busqueda) |
+                Q(last_name__icontains=busqueda) |
+                Q(email__icontains=busqueda)
+            )
+        return qs.all()
 
     def get_serializer_class(self):
         # CORREGIDO: Usar UsuarioUpdateSerializer en lugar de Login
@@ -56,7 +66,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 {'error': 'No puedes ver datos de otro usuario'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return Response(UsuarioListSerializer(instance).data)
+        return Response(UsuarioListSerializer(instance, context={'request': request}).data)
 
     def update(self, request, *args, **kwargs):
         # No administrador solo puede editarse a sí mismo
@@ -73,14 +83,34 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         
         # Retornamos la representación con el serializador de listado (que incluye id/id_usuario y datos anidados)
-        return Response(UsuarioListSerializer(instance).data)
+        return Response(UsuarioListSerializer(instance, context={'request': request}).data)
 
     def perform_create(self, serializer):
         instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_usuario')
+        if foto_archivo:
+            foto_obj = Foto_Usuario(usuario=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+            
         registrar_auditoria(self.request, "CREACIÓN", f"Se registró el usuario {instance.username} ({instance.get_full_name()})")
 
     def perform_update(self, serializer):
         instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_usuario')
+        if foto_archivo:
+            for vieja_foto in instance.fotos.all():
+                if vieja_foto.archivo and os.path.isfile(vieja_foto.archivo.path):
+                    try:
+                        os.remove(vieja_foto.archivo.path)
+                    except Exception:
+                        pass
+                vieja_foto.delete()
+
+            foto_obj = Foto_Usuario(usuario=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+
         registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el usuario {instance.username} (ID: {instance.pk})")
 
     def destroy(self, request, *args, **kwargs):

@@ -49,7 +49,7 @@ class LoginView(APIView):
         return Response({
             'access':  str(refresh.access_token),
             'refresh': str(refresh),
-            'usuario': UsuarioListSerializer(usuario).data
+            'usuario': UsuarioListSerializer(usuario, context={'request': request}).data
         }, status=status.HTTP_200_OK)
 
 

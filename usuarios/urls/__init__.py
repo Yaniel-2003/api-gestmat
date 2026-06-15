@@ -16,5 +16,6 @@ urlpatterns = [
     path('', include('usuarios.urls.proceso_matricula_urls')),
     path('', include('usuarios.urls.seguimiento_matricula_urls')),
     path('', include('usuarios.urls.pago_urls')),
+    path('', include('usuarios.urls.dashboard_urls')),
 ]
 

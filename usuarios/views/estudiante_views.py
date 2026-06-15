@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, parser_classes, permission_classes
+from rest_framework.decorators import action, api_view, parser_classes, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response 
 from rest_framework.permissions import IsAuthenticated
@@ -22,8 +22,9 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         user = self.request.user
          
         if user.perfil.nombre_perfil != 'Administrador':
-            queryset = queryset.filter(usuario=user)   
+            queryset = queryset.filter(acudientes__usuario=user)   
 
+        # Force django reloader update
         #par_bus = self.request.query_params
     
         #busqueda = par_bus.get('buscar')
@@ -92,6 +93,39 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         estudiante.delete()
         registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el estudiante {nombre} (Doc: {doc})")
         return Response({'mensaje':'Estudiante eliminado correctamente'}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], url_path='agregar-acudiente', parser_classes=[MultiPartParser, FormParser])
+    def agregar_acudiente(self, request, pk=None):
+        estudiante = self.get_object()
+        
+        from ..serializers import AcudienteUpdateSerializer
+        from ..models import Acudiente, Foto_Acudiente
+        
+        numero_documento = request.data.get('numero_documento')
+        if numero_documento:
+            acudiente = Acudiente.objects.filter(numero_documento=numero_documento).first()
+            if acudiente:
+                if acudiente not in estudiante.acudientes.all():
+                    estudiante.acudientes.add(acudiente)
+                    registrar_auditoria(request, "ACTUALIZACIÓN", f"Se vinculó acudiente existente {acudiente.nombre_completo} (ID: {acudiente.pk}) al estudiante {estudiante.nombre_completo} (ID: {estudiante.pk})")
+                    return Response({'mensaje': 'Acudiente existente vinculado correctamente', 'acudiente_id': acudiente.pk}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'El acudiente ya está vinculado a este estudiante'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = AcudienteUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            acudiente = serializer.save(usuario=request.user)
+            
+            foto_archivo = request.FILES.get('foto_acudiente')
+            if foto_archivo:
+                foto_obj = Foto_Acudiente(acudiente=acudiente)
+                foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+            
+            estudiante.acudientes.add(acudiente)
+            
+            registrar_auditoria(request, "CREACIÓN", f"Se registró y vinculó acudiente {acudiente.nombre_completo} (ID: {acudiente.pk}) al estudiante {estudiante.nombre_completo} (ID: {estudiante.pk})")
+            return Response({'mensaje': 'Acudiente registrado y vinculado correctamente', 'acudiente_id': acudiente.pk}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 ### FOTOS ESTUDIANTE 

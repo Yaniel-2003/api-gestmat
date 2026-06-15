@@ -36,6 +36,7 @@ class SeguimientoMatriculaViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAuthenticated, PermisoPorPerfil]
     queryset = Seguimiento_matricula.objects.select_related('matricula', 'paso', 'usuario_actualiza')
+    pagination_class = None
     # Limitar métodos HTTP: solo permitir GET, POST, PATCH, HEAD, OPTIONS
     http_method_names = ['get', 'post', 'patch', 'head', 'options']
 
