@@ -8,7 +8,8 @@ from backend.permissions import PermisoPorPerfil
 from ..utils import registrar_auditoria
 from rest_framework.utils import timezone
 from ..serializers import MatriculaListSerializer, MatriculaUpdateSerializer, EstudianteListSerializer, AcudienteListSerializer
-from ..models import Matricula, Foto_Acudiente, Foto_Estudiante, Estudiante, Acudiente
+from matriculas.models import Matricula
+from academico.models import Foto_Acudiente, Foto_Estudiante, Estudiante, Acudiente
 import os
 
 class MatriculaViewSet(viewsets.ModelViewSet):

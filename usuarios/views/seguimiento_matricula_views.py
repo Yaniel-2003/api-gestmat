@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 from backend.permissions import PermisoPorPerfil
 from ..utils import registrar_auditoria
-from ..models import Seguimiento_matricula
+from matriculas.models import Seguimiento_matricula
 from ..serializers import (
     SeguimientoMatriculaListSerializer,
     SeguimientoMatriculaUpdateSerializer,

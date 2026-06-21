@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from ..models import Matricula
+from matriculas.models import Matricula
 
 
 class CertificadoMatriculaView(APIView):

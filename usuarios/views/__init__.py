@@ -56,5 +56,4 @@ from .proceso_matricula_view import ProcesoMatriculaViewSet
 # Uso en URLs: router.register(r'seguimiento_matricula', SeguimientoMatriculaViewSet)
 from .seguimiento_matricula_views import SeguimientoMatriculaViewSet
 
-from .pago_views import PagoViewSet
 

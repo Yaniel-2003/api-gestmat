@@ -1,6 +1,20 @@
 from rest_framework import serializers
-from .models import *
 from django.db import transaction
+
+# Modelos propios de usuarios
+from .models import (
+    Usuario, Perfil, Tipo_documento, Trazabilidad, Foto_Usuario,
+)
+# Modelos de otras apps
+from academico.models import (
+    Eps, Jornada, Curso, Acudiente, Foto_Acudiente, Estudiante, Foto_Estudiante,
+)
+from matriculas.models import (
+    Matricula, Proceso_matricula, Seguimiento_matricula,
+    Documento_matricula, Tipo_documento_matricula,
+)
+from pagos.models import Metodo_pago, Pago, TarifaMatricula
+
 
 # ----------------------------------------------------------
 # MIXIN BASE

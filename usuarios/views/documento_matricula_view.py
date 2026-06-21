@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-from ..models import Documento_matricula, Tipo_documento_matricula
+from matriculas.models import Documento_matricula, Tipo_documento_matricula
 from ..serializers import (
     DocumentoMatriculaListSerializer,
     DocumentoMatriculaUpdateSerializer

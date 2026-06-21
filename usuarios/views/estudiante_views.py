@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.db.models import Q
 from backend.permissions import PermisoPorPerfil
 from ..utils import registrar_auditoria
-from ..models import Estudiante, Foto_Estudiante
+from academico.models import Estudiante, Foto_Estudiante
 from ..serializers import EstudianteListSerializer, EstudianteUpdateSerializer
 import os 
 
@@ -99,7 +99,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         estudiante = self.get_object()
         
         from ..serializers import AcudienteUpdateSerializer
-        from ..models import Acudiente, Foto_Acudiente
+        from academico.models import Acudiente, Foto_Acudiente
         
         numero_documento = request.data.get('numero_documento')
         if numero_documento:

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from backend.permissions import PermisoPorPerfil
 from ..utils import registrar_auditoria
-from ..models import Proceso_matricula
+from matriculas.models import Proceso_matricula
 from ..serializers import ProcesoMatriculaConEstadoSerializer
 
 
