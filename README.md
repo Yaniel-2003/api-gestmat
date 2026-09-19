@@ -223,10 +223,11 @@ La API queda disponible en `http://127.0.0.1:8000/api/` y el admin en `http://12
 
 ## Variables de entorno
 
-El proyecto lee su configuración de base de datos con `python-decouple` desde un archivo `.env` en la raíz del backend:
+El proyecto lee su configuración con `python-decouple` desde un archivo `.env` en la raíz del backend (nunca se versiona — está en `.gitignore`):
 
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
+| `SECRET_KEY` | Clave secreta de Django (**obligatoria**, sin default). Generar una nueva con `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` | — |
 | `DB_ENGINE` | Motor de base de datos Django (`mssql`, `django.db.backends.postgresql`, `django.db.backends.sqlite3`, ...) | `mssql` |
 | `DB_NAME` | Nombre de la base de datos | `gestmat` |
 | `DB_USER` | Usuario de la base de datos | *(vacío)* |
@@ -235,8 +236,11 @@ El proyecto lee su configuración de base de datos con `python-decouple` desde u
 | `DB_PORT` | Puerto (si se omite, no se envía) | *(vacío)* |
 | `DB_DRIVER` | Driver ODBC (solo si `DB_ENGINE=mssql`) | `ODBC Driver 17 for SQL Server` |
 | `DB_TRUSTED_CONNECTION` | Autenticación integrada de Windows (solo mssql) | `False` |
+| `EMAIL_HOST_USER` | Cuenta de Gmail usada para enviar correos de recuperación de contraseña | *(vacío)* |
+| `EMAIL_HOST_PASSWORD` | Contraseña de aplicación de esa cuenta de Gmail | *(vacío)* |
+| `DEFAULT_FROM_EMAIL` | Remitente por defecto de los correos | `EMAIL_HOST_USER` |
 
-> `SECRET_KEY` y las credenciales SMTP para el envío de correos de recuperación de contraseña **aún viven hardcodeadas en `settings.py`**, no en el `.env`. Ver [Notas y problemas conocidos](#notas-y-problemas-conocidos).
+> Si `EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD` quedan vacíos, la app sigue arrancando con normalidad; solo fallará el envío de correos de recuperación de contraseña.
 
 ## Docker
 
@@ -286,9 +290,9 @@ backend/
 ## Notas y problemas conocidos
 
 **Seguridad — pendiente antes de producción:**
-- `SECRET_KEY` y las credenciales SMTP (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`) están escritas en texto plano en `settings.py` en lugar de leerse desde `.env` como ya se hace con la base de datos. Se recomienda rotarlas y migrarlas a variables de entorno.
 - `DEBUG = True` y `ALLOWED_HOSTS = []` son configuración de desarrollo; deben ajustarse antes de desplegar.
 - `CORS_ALLOW_ALL_ORIGINS = True` permite cualquier origen (existe además una variable `CORS_ALLOWD_ORIGINS` con un typo que Django/cors-headers ignora silenciosamente).
+- El `SECRET_KEY` original y la contraseña de aplicación de Gmail usados antes de migrar a `.env` quedaron expuestos en commits previos del historial de git. Ambos deben considerarse comprometidos: la contraseña de aplicación de Gmail debe revocarse/regenerarse desde la cuenta de Google (ya se rotó el `SECRET_KEY` local al hacer el cambio, pero si se quiere eliminar el rastro del historial hace falta reescribirlo, p. ej. con `git filter-repo`, y forzar el push).
 
 **Deuda técnica / limpieza pendiente:**
 - `MEDIA_ROOT` apunta a una ruta absoluta de Windows (`C:/fotos_matriculas/`) en vez de una carpeta relativa al proyecto o configurable por entorno.
