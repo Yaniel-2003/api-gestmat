@@ -33,8 +33,11 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',  
+    'jazzmin',
     'usuarios',
+    'academico',
+    'matriculas',
+    'pagos',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,11 +50,141 @@ INSTALLED_APPS = [
 ]
 
 JAZZMIN_SETTINGS = {
-    "site_title": "Mi Admin",
-    "site_header": "Mi Proyecto",
-    "welcome_sign": "Bienvenido crack",
-    "site_brand": "Mi Sistema",
-    "dark_mode_theme": "cyborg",
+    # ── Identidad del sitio ───────────────────────────────────────
+    "site_title":    "GestMat",
+    "site_header":   "GestMat · Gestión de Matrículas",
+    "site_brand":    "🏫 GestMat",
+    "welcome_sign":  "Bienvenido al Panel de Administración",
+    "copyright":     "Institución Educativa · GestMat",
+
+    # ── Logos / Favicon ───────────────────────────────────────────
+    # "site_logo": "img/logo.png",
+    # "site_logo_classes": "img-circle",
+    # "login_logo": "img/logo.png",
+
+    # ── Búsqueda global ───────────────────────────────────────────
+    "search_model": ["usuarios.Usuario", "academico.Estudiante", "matriculas.Matricula"],
+
+    # ── Campo que representa al usuario ───────────────────────────
+    "user_avatar": None,
+
+    # ── Menú superior (topmenu) ───────────────────────────────────
+    "topmenu_links": [
+        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Website", "url": "/", "new_window": True},
+        {"model": "usuarios.Usuario"},
+        {"model": "academico.estudiante"},
+        {"model": "matriculas.matricula"},
+    ],
+
+    # ── Menú de usuario (esquina superior derecha) ────────────────
+    "usermenu_links": [
+        {"model": "usuarios.Usuario"}
+    ],
+
+    # ── Barra lateral ─────────────────────────────────────────────
+    "show_sidebar":           True,
+    "navigation_expanded":    False,
+    "hide_apps":              ["auth"],
+    "hide_models":            [],
+
+    "custom_links": {
+        "usuarios": [{
+            "name": "Grupos de Permisos", 
+            "url": "admin:auth_group_changelist", 
+            "icon": "fas fa-layer-group",
+        }]
+    },
+
+    # ── Orden personalizado del menú lateral ──────────────────────
+    "order_with_respect_to": [
+        "usuarios",
+        "usuarios.usuario",
+        "matriculas",
+        "matriculas.matricula",
+        "pagos",
+        "pagos.pago",
+        "pagos.tarifamatricula",
+        "academico",
+        "auth",
+    ],
+
+    # ── Iconos por modelo ─────────────────────────────────────────
+    "icons": {
+        "usuarios":                 "fas fa-user-shield",
+        "usuarios.usuario":         "fas fa-user-shield",
+        "academico":                "fas fa-school",
+        "academico.estudiante":     "fas fa-user-graduate",
+        "academico.acudiente":      "fas fa-users",
+        "academico.curso":          "fas fa-chalkboard-teacher",
+        "academico.jornada":        "fas fa-clock",
+        "academico.eps":            "fas fa-hospital",
+        "matriculas":               "fas fa-file-signature",
+        "matriculas.matricula":     "fas fa-file-signature",
+        "pagos":                    "fas fa-credit-card",
+        "pagos.pago":               "fas fa-credit-card",
+        "pagos.tarifamatricula":    "fas fa-dollar-sign",
+        "pagos.metodo_pago":        "fas fa-money-bill-wave",
+        "auth.group":               "fas fa-layer-group",
+        "auth.user":                "fas fa-user",
+    },
+
+    # ── Icono por defecto ─────────────────────────────────────────
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-circle",
+
+    # ── Relacionados / extras ─────────────────────────────────────
+    "related_modal_active": True,
+
+    # ── Personalización CSS / JS ──────────────────────────────────
+    "custom_css": None,
+    "custom_js":  None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder":      False,    # Poner True temporalmente para ajustar colores
+    "custom_css": "css/custom_admin.css",
+
+    # ── Cambio de vista (lista/detalle) ───────────────────────────
+    "changeform_format":         "horizontal_tabs",
+    "changeform_format_overrides": {
+        "usuarios.usuario":   "collapsible",
+        "usuarios.matricula": "collapsible",
+    },
+
+    # ── Lenguaje / i18n ───────────────────────────────────────────
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "litera",
+    # Tema general
+    "navbar_small_text":         False,
+    "footer_small_text":         False,
+    "body_small_text":           False,
+    "brand_small_text":          False,
+    "brand_colour":              "navbar-primary",
+    "accent":                    "accent-primary",
+    "navbar":                    "navbar-dark",
+    "no_navbar_border":          True,
+    "navbar_fixed":              True,
+    "layout_boxed":              False,
+    "footer_fixed":              False,
+    "sidebar_fixed":             True,
+    "sidebar":                   "sidebar-dark-primary",
+    "sidebar_nav_small_text":    False,
+    "sidebar_disable_expand":    False,
+    "sidebar_nav_child_indent":  True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style":  False,
+    "sidebar_nav_flat_style":    False,
+    "button_classes": {
+        "primary":   "btn-primary",
+        "secondary": "btn-secondary",
+        "info":      "btn-info",
+        "warning":   "btn-warning",
+        "danger":    "btn-danger",
+        "success":   "btn-success",
+    },
+    "actions_sticky_top": True,
 }
 
 REST_FRAMEWORK = {
@@ -65,7 +198,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "user": "100/hour",
+        "user": "10000/hour",
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -172,9 +305,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -187,6 +320,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'C:/fotos_matriculas/'

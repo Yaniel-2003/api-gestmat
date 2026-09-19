@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.utils import timezone
 from backend.permissions import PermisoPorPerfil
-from ..models import Acudiente, Foto_Acudiente
+from academico.models import Acudiente, Foto_Acudiente
 from ..serializers import AcudienteUpdateSerializer, AcudienteListSerializer
 from ..utils import registrar_auditoria  # Importación de la utilidad
 import os

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django.db.models import Q
-from ..models import Curso
+from academico.models import Curso
 from ..serializers import CursoUpdateSerializer, CursoListSerializer
 from backend.permissions import PermisoPorPerfil # Asegúrate de que esta ruta sea correcta en tu proyecto
 from ..utils import registrar_auditoria

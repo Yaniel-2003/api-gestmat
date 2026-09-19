@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-from ..models import Documento_matricula, Tipo_documento_matricula
+from matriculas.models import Documento_matricula, Tipo_documento_matricula
 from ..serializers import (
     DocumentoMatriculaListSerializer,
     DocumentoMatriculaUpdateSerializer
@@ -225,8 +225,11 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
         # Creamos el resultado
         resultado = [
             {
+                'id': tipo.pk,
                 'id_tipo_documento_matricula': tipo.pk,
                 'nombre': tipo.descripcion,
+                'descripcion': tipo.descripcion,
+                'obligatorio': tipo.obligatorio,
 
                 # Verificamos si ya fue cargado
                 'ya_cargado': (
@@ -249,10 +252,9 @@ class DocumentoMatriculaViewSet(viewsets.ModelViewSet):
 
     def revisar(self, request, pk=None):
 
-        # Solo administradores pueden revisar
-        if (request.user.perfil.nombre_perfil != 'Administrador'):
-
-            return Response( { 'error': ( 'No tienes permiso ' 'para revisar documentos' ) }, status=status.HTTP_403_FORBIDDEN )
+        # Solo usuarios con el permiso específico pueden revisar
+        if not request.user.has_perm('matriculas.view_documento_matricula'):
+            return Response( { 'error': ( 'No tienes permiso para revisar documentos' ) }, status=status.HTTP_403_FORBIDDEN )
 
         # Obtenemos el documento
         documento = self.get_object()
