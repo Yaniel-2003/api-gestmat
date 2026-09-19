@@ -1,0 +1,58 @@
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+from ..models import Perfil
+from ..serializers import PerfilListSerializer, PerfilUpdateSerializer
+from backend.permissions import PermisoPorPerfil # Asegúrate de que esta ruta es correcta
+from ..utils import registrar_auditoria
+
+
+class PerfilViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, PermisoPorPerfil]
+    lookup_field = 'id'
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = Perfil.objects.all()
+
+        #Capturamos los parametros que se van a buscar
+        perfilId = self.request.query_params.get('id')
+        nombre = self.request.query_params.get('nombre_perfil')
+        estado = self.request.query_params.get('activo')
+
+        #Aplicamos los filtros dinamicos
+        if nombre:
+            queryset = queryset.filter(nombre_perfil__icontains=nombre)
+
+        if perfilId:
+            queryset = queryset.filter(id=perfilId)
+
+        if estado is not None:
+            #convertimos true en 1 y cualquier numero el false
+           esActivo = estado.lower() in ['true','1']
+           queryset = queryset.filter(activo=esActivo) 
+
+        return queryset
+    
+    def get_serializer_class(self):
+        #loigca de selecion de serializer (CRUD)
+        if self.action in ['create','update','partial_update']:
+            return PerfilUpdateSerializer
+        return PerfilListSerializer
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "CREACIÓN", f"Se creó el perfil '{instance.nombre_perfil}'")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el perfil '{instance.nombre_perfil}' (ID: {instance.pk})")
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        nombre = instance.nombre_perfil
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el perfil '{nombre}'")
+        return Response({'mensaje': 'Perfil eliminado correctamente'}, status=status.HTTP_200_OK)

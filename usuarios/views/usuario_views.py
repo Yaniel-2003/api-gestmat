@@ -1,0 +1,235 @@
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view, parser_classes, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+import os
+from django.db.models import Q
+
+from ..models import Usuario, Foto_Usuario
+from ..serializers import UsuarioListSerializer, UsuarioUpdateSerializer # CORREGIDO
+from backend.permissions import PermisoPorPerfil
+from ..utils import registrar_auditoria
+ 
+
+# ----------------------------------------------------------
+# HELPERS DE PERMISOS - evita repetir la lógica en cada método
+# ----------------------------------------------------------
+
+def es_admin(user):
+    return user.perfil.nombre_perfil == 'Administrador'
+
+def es_propio_usuario(user, id):
+    return user.pk == id
+
+
+# ----------------------------------------------------------
+# CRUD PRINCIPAL
+# ----------------------------------------------------------
+
+class UsuarioViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, PermisoPorPerfil]
+
+    def get_permissions(self):
+        # El registro es público, el resto requiere autenticación
+        if self.action == 'create':
+            return [AllowAny()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = Usuario.objects.select_related('perfil', 'tipo_documento')
+        if not es_admin(self.request.user):
+            # Cualquier otro perfil solo se ve a sí mismo
+            return qs.filter(pk=self.request.user.pk)
+            
+        busqueda = self.request.query_params.get('buscar')
+        if busqueda:
+            qs = qs.filter(
+                Q(username__icontains=busqueda) |
+                Q(first_name__icontains=busqueda) |
+                Q(last_name__icontains=busqueda) |
+                Q(email__icontains=busqueda)
+            )
+        return qs.all()
+
+    def get_serializer_class(self):
+        # CORREGIDO: Usar UsuarioUpdateSerializer en lugar de Login
+        if self.action in ['create', 'update', 'partial_update']:
+            return UsuarioUpdateSerializer 
+        return UsuarioListSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        # No administrador solo puede ver su propio detalle
+        instance = self.get_object()
+        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.pk):
+            return Response(
+                {'error': 'No puedes ver datos de otro usuario'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return Response(UsuarioListSerializer(instance, context={'request': request}).data)
+
+    def update(self, request, *args, **kwargs):
+        # No administrador solo puede editarse a sí mismo
+        instance = self.get_object()
+        if not es_admin(request.user) and not es_propio_usuario(request.user, instance.pk):
+            return Response(
+                {'error': 'No puedes editar datos de otro usuario'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Retornamos la representación con el serializador de listado (que incluye id/id_usuario y datos anidados)
+        return Response(UsuarioListSerializer(instance, context={'request': request}).data)
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_usuario')
+        if foto_archivo:
+            foto_obj = Foto_Usuario(usuario=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+            
+        registrar_auditoria(self.request, "CREACIÓN", f"Se registró el usuario {instance.username} ({instance.get_full_name()})")
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+
+        foto_archivo = self.request.FILES.get('foto_usuario')
+        if foto_archivo:
+            for vieja_foto in instance.fotos.all():
+                if vieja_foto.archivo and os.path.isfile(vieja_foto.archivo.path):
+                    try:
+                        os.remove(vieja_foto.archivo.path)
+                    except Exception:
+                        pass
+                vieja_foto.delete()
+
+            foto_obj = Foto_Usuario(usuario=instance)
+            foto_obj.archivo.save(foto_archivo.name, foto_archivo, save=True)
+
+        registrar_auditoria(self.request, "ACTUALIZACIÓN", f"Se actualizó el usuario {instance.username} (ID: {instance.pk})")
+
+    def destroy(self, request, *args, **kwargs):
+        # Solo el administrador puede eliminar
+        if not es_admin(request.user):
+            return Response(
+                {'error': 'Solo el Administrador puede eliminar usuarios'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        instance = self.get_object()
+
+        # Un administrador no puede eliminarse a sí mismo
+        if es_propio_usuario(request.user, instance.pk):
+            return Response(
+                {'error': 'No puedes eliminarte a ti mismo'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        nombre_usuario = instance.username
+        id_eliminado = instance.pk
+
+        # Borra fotos físicas antes de eliminar
+        for foto in instance.fotos.all():
+            if foto.archivo and os.path.isfile(foto.archivo.path):
+                os.remove(foto.archivo.path)
+            foto.delete()
+
+        instance.delete()
+        registrar_auditoria(request, "ELIMINACIÓN", f"Se eliminó el usuario {nombre_usuario} (ID: {id_eliminado})")
+        return Response({'mensaje': 'Usuario eliminado correctamente'}, status=status.HTTP_200_OK)
+
+
+# ----------------------------------------------------------
+# FOTOS - Endpoint dedicado
+# ----------------------------------------------------------
+
+@api_view(['GET', 'POST'])
+@parser_classes([MultiPartParser, FormParser])
+@permission_classes([IsAuthenticated, PermisoPorPerfil])
+def fotos_usuario(request, id):
+    """
+    GET  → lista las fotos del usuario
+    POST → sube hasta 4 fotos
+    """
+    try:
+        usuario = Usuario.objects.get(id=id)
+    except Usuario.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Solo admin o el propio usuario pueden ver/subir fotos
+    if not es_admin(request.user) and not es_propio_usuario(request.user, id):
+        return Response({'error': 'No tienes permiso para acceder a estas fotos'}, status=status.HTTP_403_FORBIDDEN)
+
+    # ── GET ──────────────────────────────────────────────
+    if request.method == 'GET':
+        # CORREGIDO: Se quitó el order_by y el campo subida_el
+        fotos = usuario.fotos.all()
+        data  = [
+            {
+                'id'  : foto.pk,
+                'url' : request.build_absolute_uri(foto.archivo.url),
+            }
+            for foto in fotos
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    # ── POST ─────────────────────────────────────────────
+    if request.method == 'POST':
+        EXTENSIONES_PERMITIDAS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+        fotos_guardadas = []
+        errores         = []
+
+        for i in range(4):
+            archivo = request.FILES.get(f'foto_{i}')
+            if not archivo:
+                continue
+
+            ext = os.path.splitext(archivo.name)[1].lower()
+            if ext not in EXTENSIONES_PERMITIDAS:
+                errores.append(f'foto_{i}: extensión {ext} no permitida')
+                continue
+
+            foto = Foto_Usuario(usuario=usuario)
+            foto.archivo.save(archivo.name, archivo, save=True)
+            fotos_guardadas.append({
+                'id' : foto.pk,
+                'url': request.build_absolute_uri(foto.archivo.url),
+            })
+
+        if fotos_guardadas:
+            registrar_auditoria(request, "SUBIDA FOTOS", f"Se subieron {len(fotos_guardadas)} fotos para el usuario {usuario.username}")
+
+        if not fotos_guardadas and errores:
+            return Response({'errores': errores}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'success': True,
+            'usuario': id,
+            'fotos'  : fotos_guardadas,
+            **(({'advertencias': errores}) if errores else {}),
+        }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, PermisoPorPerfil])
+def eliminar_foto_usuario(request, id, foto_id):
+    """DELETE → elimina una foto específica del usuario."""
+
+    if not es_admin(request.user) and not es_propio_usuario(request.user, id):
+        return Response({'error': 'No tienes permiso para eliminar esta foto'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        foto = Foto_Usuario.objects.get(id=foto_id, usuario_id=id)
+    except Foto_Usuario.DoesNotExist:
+        return Response({'error': 'Foto no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    if foto.archivo and os.path.isfile(foto.archivo.path):
+        os.remove(foto.archivo.path)
+
+    foto.delete()
+    registrar_auditoria(request, "ELIMINAR FOTO", f"Se eliminó una foto (ID: {foto_id}) del usuario ID {id}")
+    return Response({'mensaje': 'Foto eliminada correctamente'}, status=status.HTTP_200_OK)
