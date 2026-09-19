@@ -219,3 +219,12 @@ __marimo__/
 
 # Entorno virtual del proyecto
 venvGsT/
+
+# Archivos de medios subidos por usuarios (fotos, documentos con datos
+# personales de estudiantes/acudientes) y respaldos locales de la BD
+media/
+db.sqlite3.backup
+
+# Scripts de depuracion locales (no aportan al repo, rutas hardcodeadas)
+search_id_refs.py
+search_permiso.txt

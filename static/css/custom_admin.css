@@ -1,0 +1,63 @@
+/* Fix for dual listboxes (permissions/groups) being too narrow in Jazzmin/Django Admin */
+
+/* Forzar que las columnas de label e input ocupen 100% */
+.field-groups .col-sm-2, .field-groups .col-sm-10,
+.field-user_permissions .col-sm-2, .field-user_permissions .col-sm-10 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+}
+
+/* El label alineado a la izquierda */
+.field-groups label, .field-user_permissions label {
+    text-align: left !important;
+    margin-bottom: 10px !important;
+    display: block;
+}
+
+/* El wrapper interno debe ocupar 100% */
+.field-groups .related-widget-wrapper, 
+.field-user_permissions .related-widget-wrapper {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* Contenedor principal de la caja doble */
+.selector {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Cajas izquierda y derecha */
+.selector-available, .selector-chosen {
+    flex: 1 1 45% !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+
+/* La columna central de botones */
+.selector-chooser {
+    flex: 0 0 10% !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+}
+
+/* Los select (dropdown) de la lista */
+.selector select {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: 350px !important;
+}
+
+.selector .selector-filter {
+    width: 100% !important;
+}
+
+.selector-available h2, .selector-chosen h2 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}

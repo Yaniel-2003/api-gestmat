@@ -1,0 +1,54 @@
+{% extends "admin/change_list.html" %}
+
+{% block search %}
+{{ block.super }}
+<div style="margin: 10px 0 16px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+  <form method="get" style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+
+    {% for k, v in request.GET.items %}
+      {% if k != 'fecha_filtro' %}
+        <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endif %}
+    {% endfor %}
+
+    <label style="font-weight: bold;">Filtrar por fecha de matrícula:</label>
+
+    <div class="admin-datetime" style="display: inline-flex; align-items: center;">
+      <input
+        type="text"
+        name="fecha_filtro"
+        value="{{ fecha_filtro }}"
+        class="vDateField"
+        placeholder="yyyy-mm-dd"
+        style="width: 130px;"
+      >
+    </div>
+
+    <input type="submit" value="Filtrar" class="button default">
+
+    {% if fecha_filtro %}
+      <a href="?" style="margin-left: 4px;">Limpiar</a>
+    {% endif %}
+
+    <div style="margin-left: 15px;">
+        <button type="button" class="btn btn-info" onclick="
+            var actionSelect = document.querySelector('select[name=action]');
+            if (!actionSelect) {
+                alert('No se encontraron acciones.');
+                return;
+            }
+            var checkboxes = document.querySelectorAll('input.action-select:checked');
+            if (checkboxes.length === 0) {
+                alert('Por favor, primero selecciona al menos una matrícula en la tabla.');
+                return;
+            }
+            actionSelect.value = 'accion_asignar_fecha_ingreso';
+            document.getElementById('changelist-form').submit();
+        ">
+            Asignar fecha de ingreso
+        </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
