@@ -61,6 +61,12 @@ class Usuario(AbstractUser):
     class Meta:
         db_table = 'SEC_Usuarios'
         managed  = True
+        permissions = [
+            ("ver_modulo_matriculas", "Puede ver el módulo de Matrículas"),
+            ("ver_modulo_gestion_academica", "Puede ver el módulo de Gestión Académica"),
+            ("ver_modulo_administracion", "Puede ver el módulo de Administración"),
+            ("ver_dashboard_matriculas", "Puede ver el dashboard de Matrículas"),
+        ]
 
     def __str__(self):
         return self.get_full_name() or self.username or "Sin nombre"

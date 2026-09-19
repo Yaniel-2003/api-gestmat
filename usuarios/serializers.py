@@ -165,15 +165,19 @@ class UsuarioListSerializer(BaseSerializer):
     perfil         = PerfilListSerializer()
     tipo_documento = TipoDocumentoSerializer()
     fotos          = FotoUsuarioSerializer(many=True) # Reemplaza el antiguo campo foto_usuario
+    permisos_modulos = serializers.SerializerMethodField()
 
     class Meta(BaseSerializer.Meta):
         model  = Usuario
         fields = [
             'id', 'id_usuario', 'username', 'first_name', 'last_name', 'email',
             'telefono', 'num_documento', 'fotos',
-            'is_active', 'date_joined', 'perfil', 'tipo_documento',
+            'is_active', 'date_joined', 'perfil', 'tipo_documento', 'permisos_modulos',
         ]
         read_only_fields = ['id_usuario', 'date_joined']
+
+    def get_permisos_modulos(self, obj):
+        return [perm.split('.')[1] for perm in obj.get_all_permissions()]
 
 
 class UsuarioUpdateSerializer(serializers.ModelSerializer):
@@ -342,13 +346,26 @@ class MatriculaListSerializer(BaseSerializer):
     acudiente  = AcudienteListSerializer()
     curso      = CursoListSerializer()
     jornada    = JornadaSerializer()
+    valor_tarifa = serializers.SerializerMethodField()
 
     class Meta(BaseSerializer.Meta):
         model  = Matricula
         fields = [
             'id', 'id_matricula', 'estudiante', 'acudiente', 'curso', 'jornada',
             'year_lectivo', 'fecha_matricula', 'fecha_inicio', 'estado', 'observaciones',
+            'valor_tarifa'
         ]
+
+    def get_valor_tarifa(self, obj):
+        from pagos.models import TarifaMatricula
+        if not obj.curso or not obj.year_lectivo:
+            return 0
+        tarifa = TarifaMatricula.objects.filter(
+            curso=obj.curso, 
+            year_lectivo=obj.year_lectivo, 
+            activo=True
+        ).first()
+        return tarifa.valor if tarifa else 0
 
 
 class MatriculaUpdateSerializer(serializers.ModelSerializer):
